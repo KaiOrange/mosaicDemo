@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-100%, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>mosaicDemo</title>
+    <style>
+        body{
+            padding: 10px 20px;
+        }
+        table{
+            min-height: 400px;
+            table-layout:fixed;
+            border-collapse: collapse;
+        }
+        table tr:first-child{
+            height: 36px;
+            vertical-align: middle;
+        }
+        table tr{
+            vertical-align: top;
+        }
+        table tr td{
+            padding: 5px 10px;
+        }
+        #rangeInput{
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <table border="1" cellpadding="0" cellspacing="0" width="100%">
+        <tbody>
+            <tr>
+                <td>
+                    <div>
+                        <input type="file" id="fileBtn">    
+                    </div>
+                </td>
+                <td>
+                    <div>
+                        <input type="range" id="rangeInput" min="1" max="10" value="5" />
+                        <input type="button" id="downloadBtn" value="下载">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div>
+                        <img id="img" alt="请选择图片" style="display:none"/>
+                    </div>
+                </td>
+                <td>
+                    <div>
+                        <img id="convertImg" alt="" style="display:none"/>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+        
+    <script type="text/javascript">
+        //注意这里定义了一个全局变量用来设置模糊范围的 默认是5
+        var pix = 5;
+
+        document.getElementById("fileBtn").addEventListener("change",function (e){
+            if (window.FileReader) {
+                var file = e.target.files[0];
+                let reader = new FileReader();//HTML读取文件对象 IE或者低版本浏览器不支持
+                reader.onload = function (event) { //回调函数
+                    var dataURL = event.target.result;
+                    //动态设置图片src 这里使用base64图片
+                    //当这个改变的时候会调用img的load事件 其事件在下面
+                    var img = document.getElementById("img");
+                    img.src = dataURL;
+                    img.style.display = "block";//显示图片
+                    document.getElementById("convertImg").style.display = "block";//显示图片
+                };
+                reader.readAsDataURL(file);//读取文件
+            } else {
+                alert("您的浏览器不支持改功能!!");
+            }
+        });
+
+        //图片的src一变化 那么就显示模糊化后的图片
+        document.getElementById("img").addEventListener("load",function (e){
+            if (e.target.src) {
+                showConvertPic();//展示变化后的图片
+            }
+        });
+
+
+        document.getElementById("rangeInput").addEventListener("change", function (e) {
+            if (document.getElementById("img").src) {
+                pix = parseInt(e.target.value);
+                showConvertPic();//展示变化后的图片
+            }
+        });
+    
+        //下载图片
+        document.getElementById("downloadBtn").addEventListener("click",function (e){
+            var convertImg = document.getElementById("convertImg");
+            if(!!convertImg.src){
+                download(convertImg.src);
+            } else {
+                alert("请先上传图片");
+            }
+        });
+
+        function showConvertPic(){
+            var img = document.getElementById("img");//找到要出来的图片dom元素
+            var convertImg = document.getElementById("convertImg");//找到要展示的图片dom元素
+            convertImg.src = createRevertPic(img);//处理图片
+        }
+
+        function createRevertPic(img){
+            var canvas = document.createElement("canvas");
+            canvas.width = img.width;   
+            canvas.height = img.height;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img,0,0);  
+            var c = ctx.getImageData(0, 0, img.width, img.height);
+            //这里有个坑 谷歌等浏览器对getImageData做了安全性检测 本地存放的图片也是不能访问的
+            //但是我们我们这个功能主要是对本地的图片进行操作 所以我们在最开始的JS处使用了FileReader对象 把图片的本地url地址转换为base64
+            var height = c.height;//图片高度
+            var width = c.width;//图片宽度
+            for(var i = 0; i < height; i+=pix){
+                for(var j = 0; j < width; j+=pix){
+                    var rAvg = 0;//r平均的数值
+                    var gAvg = 0;//g平均的数值
+                    var bAvg = 0;//b平均的数值
+                    var aAvg = 0;//a平均的数值
+                    var count = 0;
+                    outerFor:for (var iPix = i; iPix < i+pix; iPix++) {
+                        for (var jPix = j; jPix < j+pix; jPix++) {
+                            if (iPix > height) {
+                                break;
+                            } else if(jPix>width){
+                                break outerFor;
+                            }
+                            var x = iPix*4*width + 4*jPix;
+                            count++;
+                            rAvg += c.data[x];
+                            gAvg += c.data[x+1];
+                            bAvg += c.data[x+2];
+                            aAvg += c.data[x+3];
+                        }
+                        
+                    }
+                    rAvg /= (count);
+                    gAvg /= (count);
+                    bAvg /= (count);
+                    aAvg /= (count);
+
+                    outerFor:for (var iPix = i; iPix < i+pix; iPix++) {
+                        for (var jPix = j; jPix < j+pix; jPix++) {
+                            if (iPix > height) {
+                                break;
+                            } else if(jPix>width){
+                                break outerFor;
+                            }
+                            var x = iPix*4*width + 4*jPix;
+                            c.data[x] = rAvg
+                            c.data[x+1] = gAvg;
+                            c.data[x+2] = bAvg; 
+                            c.data[x+3] = aAvg;//透明度
+                        }
+                    }
+                }
+            }
+            ctx.putImageData(c,0,0);
+            return canvas.toDataURL(); //返回canvas图片数据url
+        }
+
+        //下载图片
+        function download(src) {
+            var $a = document.createElement('a');
+            $a.setAttribute("href", src);
+            $a.setAttribute("download", "");
+
+            var evObj = document.createEvent('MouseEvents');
+            evObj.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, true, false, 0, null);
+            $a.dispatchEvent(evObj);
+        };
+        
+    </script>  
+
+</body>
+</html>
