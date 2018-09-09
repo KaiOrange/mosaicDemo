@@ -9,56 +9,62 @@
         body{
             padding: 10px 20px;
         }
-        table{
+        .main-div{
+            display: flex;
+        }
+        .frame-div{
+            flex-grow:1;
+            margin-left: -1px;
+            overflow: hidden;
+        }
+        .frame-top{
+            border: 1px solid #000000;
+            border-bottom: 0;
+            padding: 5px;
+        }
+        .frame-center{
             min-height: 400px;
-            table-layout:fixed;
-            border-collapse: collapse;
-        }
-        table tr:first-child{
-            height: 36px;
-            vertical-align: middle;
-        }
-        table tr{
-            vertical-align: top;
-        }
-        table tr td{
-            padding: 5px 10px;
+            border: 1px solid #000000;
+            padding: 5px;
         }
         #rangeInput{
-            vertical-align: middle;
+            vertical-align: bottom;
+        }
+
+        @media screen and (max-width: 600px) {
+            .main-div{
+                flex-direction: column;
+            }
+            .frame-div{
+                margin-left: 0;
+                margin-bottom: -1px;
+            }
+            .frame-center{
+                min-height: 16rem;
+            }
         }
     </style>
 </head>
 <body>
-    <table border="1" cellpadding="0" cellspacing="0" width="100%">
-        <tbody>
-            <tr>
-                <td>
-                    <div>
-                        <input type="file" id="fileBtn">    
-                    </div>
-                </td>
-                <td>
-                    <div>
-                        <input type="range" id="rangeInput" min="1" max="10" value="5" />
-                        <input type="button" id="downloadBtn" value="下载">
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div>
-                        <img id="img" alt="请选择图片" style="display:none"/>
-                    </div>
-                </td>
-                <td>
-                    <div>
-                        <img id="convertImg" alt="" style="display:none"/>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="main-div">
+        <div class="frame-div">
+            <div class="frame-top">
+                <input type="file" id="fileBtn">    
+            </div>
+            <div class="frame-center">
+                <img id="img" alt="请选择图片" style="display:none"/>
+            </div>
+        </div>
+        <div class="frame-div">
+            <div class="frame-top">
+                <input type="range" id="rangeInput" min="1" max="10" value="5" />
+                <input type="button" id="downloadBtn" value="下载">
+            </div>
+            <div class="frame-center">
+                <img id="convertImg" alt="" style="display:none"/>
+            </div>
+        </div>
+    </div>
         
     <script type="text/javascript">
         //注意这里定义了一个全局变量用来设置模糊范围的 默认是5

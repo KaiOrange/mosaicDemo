@@ -10,6 +10,10 @@
 
 ![如何使用](./use.gif)
 
+### 使用
+
+[在线打开demo](https://kaiorange.github.io/mosaicDemo/)
+
 ### 源码
 
 [index.html](./index.html)
